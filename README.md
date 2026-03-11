@@ -48,8 +48,7 @@ Run:
 
 ## Expected Output
 
-
-Top predictions:
+Top predictions for sample.jpg:
 
 class_207: 0.8537
 
