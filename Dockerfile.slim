@@ -1,0 +1,33 @@
+# -------- Stage 1: builder --------
+FROM python:3.12 AS builder
+
+WORKDIR /app
+
+# Створюємо окреме віртуальне середовище
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Копіюємо файл залежностей
+COPY requirements.txt .
+
+# Встановлюємо тільки потрібні Python-залежності
+# CPU-only PyTorch ставимо з офіційного CPU index
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch torchvision && \
+    pip install --no-cache-dir -r requirements.txt
+
+# -------- Stage 2: runtime --------
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Підключаємо готове venv із builder stage
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Копіюємо тільки необхідні файли для inference
+COPY inference.py .
+COPY model.pt .
+COPY sample.png .
+
+CMD ["python", "inference.py", "--image", "sample.png", "--model", "model.pt"]

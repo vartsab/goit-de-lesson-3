@@ -1,0 +1,26 @@
+FROM python:3.12
+
+WORKDIR /app
+
+# Навмисно залишаємо fat-образ важким:
+# додаємо системні інструменти, які для runtime не дуже потрібні
+RUN apt-get update && apt-get install -y \
+    curl \
+    wget \
+    git \
+    vim \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копіюємо файли проєкту
+COPY requirements.txt .
+COPY inference.py .
+COPY model.pt .
+COPY sample.png .
+
+# Встановлюємо CPU-only PyTorch + інші залежності
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch torchvision && \
+    pip install --no-cache-dir -r requirements.txt
+
+CMD ["python", "inference.py", "--image", "sample.png", "--model", "model.pt"]
